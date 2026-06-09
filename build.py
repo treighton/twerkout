@@ -6,6 +6,9 @@ Defaults: --data ./data  --out ./dashboard.html
 import sys
 from pathlib import Path
 
+# build.py lives at the repo root; add src/ to the path so `twerkout` is
+# importable when this is run directly as `python build.py` (no install).
+# Imports below intentionally follow this line (E402) for that reason.
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
 import argparse

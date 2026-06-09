@@ -11,6 +11,7 @@ def render_dashboard(view: dict) -> str:
     env = Environment(
         loader=FileSystemLoader(str(TEMPLATES_DIR)),
         autoescape=select_autoescape(["html"]),
+        keep_trailing_newline=True,
     )
     template = env.get_template("dashboard.html.j2")
     # Embed computed data as a JSON island for the charts. json.dumps produces
