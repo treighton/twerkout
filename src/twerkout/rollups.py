@@ -2,8 +2,6 @@
 
 Output is plain dicts (JSON-friendly) so render.py can embed them directly.
 """
-from typing import Optional
-
 from twerkout.models import (
     ProgramWeek, StrengthRow, Zone2Row, RuckRow, HillRow, RecoveryRow,
 )
@@ -37,6 +35,7 @@ def enrich_zone2(rows: list[Zone2Row], program: list[ProgramWeek], program_start
         week = metrics.week_for_date(r.date, program_start)
         p = by_week.get(week)
         planned = p.zone2_planned_min if p else None
+        # resistance is not surfaced — no planned target or derived metric uses it
         out.append({
             "date": r.date, "week": week, "activity": r.activity,
             "duration_min": r.duration_min, "avg_hr": r.avg_hr,

@@ -58,6 +58,11 @@ def load_program(path: Path) -> list[ProgramWeek]:
             hill_planned_repeats=_num(r["hill_planned_repeats"], field="hill_planned_repeats", source=path),
             notes=(r.get("notes") or "").strip(),
         ))
+    seen = set()
+    for pw in out:
+        if pw.week in seen:
+            raise ValueError(f"{path.name}: duplicate week {pw.week}")
+        seen.add(pw.week)
     return out
 
 

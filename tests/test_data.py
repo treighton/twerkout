@@ -54,3 +54,14 @@ def test_load_strength_bad_number_raises_with_context(tmp_path):
     )
     with pytest.raises(ValueError, match="bodyweight"):
         load_strength(csv_path)
+
+
+def test_load_program_rejects_duplicate_weeks(tmp_path):
+    csv_path = tmp_path / "program.csv"
+    csv_path.write_text(
+        "week,zone2_planned_min,ruck_planned_min,ruck_planned_weight,hill_planned_repeats,notes\n"
+        "1,30,30,20,4,\n"
+        "1,35,40,20,5,\n"
+    )
+    with pytest.raises(ValueError, match="duplicate week 1"):
+        load_program(csv_path)

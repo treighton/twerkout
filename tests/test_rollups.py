@@ -1,6 +1,6 @@
 from twerkout.models import ProgramWeek, StrengthRow, Zone2Row, RecoveryRow
 from twerkout.rollups import (
-    enrich_strength, enrich_zone2, weekly_zone2_volume, enrich_recovery,
+    enrich_strength, enrich_zone2, weekly_zone2_volume, enrich_recovery, enrich_ruck,
 )
 
 PROGRAM = [
@@ -53,3 +53,20 @@ def test_enrich_recovery_adds_score_and_status():
     out = enrich_recovery(rows)
     assert out[0]["score"] is not None
     assert out[0]["status"] in {"On Track", "Caution", "Back Off"}
+
+
+def test_enrich_ruck_picks_up_both_planned_fields():
+    from twerkout.models import RuckRow
+    from twerkout.rollups import enrich_ruck
+    # program week 1: ruck_planned_min=30, ruck_planned_weight=20
+    rows = [RuckRow(date="2026-06-02", pack_weight=25, duration_min=45)]
+    out = enrich_ruck(rows, PROGRAM, START)
+    assert out[0]["planned_min"] == 30
+    assert out[0]["planned_weight"] == 20
+    assert out[0]["load"] == 25 * 45
+    assert out[0]["planned_met"] == "Yes"   # weight 25>=20 and duration 45>=30
+
+    # weight under target -> "No" even though duration is met
+    rows2 = [RuckRow(date="2026-06-02", pack_weight=15, duration_min=45)]
+    out2 = enrich_ruck(rows2, PROGRAM, START)
+    assert out2[0]["planned_met"] == "No"
