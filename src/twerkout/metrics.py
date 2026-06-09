@@ -12,8 +12,17 @@ def _parse(d: str) -> date:
 
 
 def week_for_date(row_date: str, program_start: str) -> int:
-    """INT((date - start)/7)+1 — day 1..7 = week 1, day 8..14 = week 2, etc."""
-    delta = (_parse(row_date) - _parse(program_start)).days
+    """INT((date - start)/7)+1 — day 1..7 = week 1, day 8..14 = week 2, etc.
+
+    Every log row requires a date; a blank or malformed date is a bad row and
+    fails loudly with context rather than producing a silently-wrong week.
+    """
+    try:
+        delta = (_parse(row_date) - _parse(program_start)).days
+    except ValueError as exc:
+        raise ValueError(
+            f"invalid date: row_date={row_date!r}, program_start={program_start!r}"
+        ) from exc
     return delta // 7 + 1
 
 

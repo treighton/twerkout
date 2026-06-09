@@ -22,6 +22,7 @@ def test_e1rm_epley_with_actual_reps():
 def test_e1rm_blank_inputs_return_none():
     assert e1rm(None, 5) is None
     assert e1rm(225, None) is None
+    assert e1rm(None, None) is None
 
 
 def test_planned_met_zone2_compares_duration_to_plan():
@@ -68,3 +69,10 @@ def test_status_thresholds():
     assert status_for_score(2.4) == "Caution"
     assert status_for_score(2.5) == "On Track"    # >= 2.5
     assert status_for_score(None) == ""
+
+
+def test_week_for_date_blank_raises_with_context():
+    with pytest.raises(ValueError, match="invalid date"):
+        week_for_date("", "2026-06-01")
+    with pytest.raises(ValueError, match="invalid date"):
+        week_for_date("not-a-date", "2026-06-01")
