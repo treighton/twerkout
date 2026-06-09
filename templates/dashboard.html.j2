@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Twerkout — Training Dashboard</title>
+<!-- Chart.js pinned to an exact version with Subresource Integrity (SRI).
+     The browser refuses to run the script if its hash doesn't match, so a
+     compromised CDN can't inject code. -->
+<script
+  src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"
+  integrity="sha384-Sse/HDqcypGpyTDpvZOJNnG0TT3feGQUkF9H+mnRvic+LjR+K1NhTt8f51KIQ3v3"
+  crossorigin="anonymous"></script>
+<style>
+  :root { font-family: system-ui, sans-serif; }
+  body { margin: 0; padding: 1rem; max-width: 900px; margin: 0 auto; color: #1a1a1a; }
+  h1 { font-size: 1.4rem; }
+  .summary { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1rem 0; }
+  .card { background: #f4f4f5; border-radius: 8px; padding: 0.75rem 1rem; flex: 1 1 140px; }
+  .card .label { font-size: 0.75rem; color: #666; text-transform: uppercase; }
+  .card .value { font-size: 1.3rem; font-weight: 600; }
+  canvas { margin: 1rem 0; }
+  details { margin: 0.5rem 0; border: 1px solid #e4e4e7; border-radius: 8px; padding: 0.5rem 0.75rem; }
+  summary { cursor: pointer; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 0.5rem; }
+  th, td { text-align: left; padding: 0.3rem 0.5rem; border-bottom: 1px solid #eee; }
+  .met-Yes { color: #16a34a; } .met-No { color: #dc2626; }
+</style>
+</head>
+<body>
+<h1>Twerkout — Week {{ view.summary.current_week }}</h1>
+
+<section class="summary">
+  <div class="card"><div class="label">Total Zone 2 min</div><div class="value">{{ view.summary.total_zone2_min }}</div></div>
+  {% for lift, val in view.summary.latest_e1rm.items() %}
+  <div class="card"><div class="label">e1RM {{ lift }}</div><div class="value">{{ val if val is not none else "—" }}</div></div>
+  {% endfor %}
+  <div class="card"><div class="label">Recovery</div><div class="value">{{ view.summary.latest_recovery_status or "—" }}</div></div>
+</section>
+
+<canvas id="e1rmChart" height="120"></canvas>
+<canvas id="zone2Chart" height="120"></canvas>
+<canvas id="recoveryChart" height="120"></canvas>
+
+<details>
+  <summary>Strength (derived)</summary>
+  <table>
+    <tr><th>Date</th><th>Wk</th><th>e1RM Sq</th><th>e1RM Pr</th><th>e1RM Be</th><th>e1RM Dl</th></tr>
+    {% for r in view.strength %}
+    <tr><td>{{ r.date }}</td><td>{{ r.week }}</td>
+      <td>{{ r.e1rm_squat|round(1) if r.e1rm_squat is not none else "" }}</td>
+      <td>{{ r.e1rm_press|round(1) if r.e1rm_press is not none else "" }}</td>
+      <td>{{ r.e1rm_bench|round(1) if r.e1rm_bench is not none else "" }}</td>
+      <td>{{ r.e1rm_deadlift|round(1) if r.e1rm_deadlift is not none else "" }}</td></tr>
+    {% endfor %}
+  </table>
+</details>
+
+<details>
+  <summary>Zone 2 (derived)</summary>
+  <table>
+    <tr><th>Date</th><th>Wk</th><th>Planned</th><th>Met?</th></tr>
+    {% for r in view.zone2 %}
+    <tr><td>{{ r.date }}</td><td>{{ r.week }}</td><td>{{ r.planned_min if r.planned_min is not none else "" }}</td>
+      <td class="met-{{ r.planned_met }}">{{ r.planned_met }}</td></tr>
+    {% endfor %}
+  </table>
+</details>
+
+<details>
+  <summary>Ruck (derived)</summary>
+  <table>
+    <tr><th>Date</th><th>Wk</th><th>Load</th><th>Met?</th></tr>
+    {% for r in view.ruck %}
+    <tr><td>{{ r.date }}</td><td>{{ r.week }}</td><td>{{ r.load if r.load is not none else "" }}</td>
+      <td class="met-{{ r.planned_met }}">{{ r.planned_met }}</td></tr>
+    {% endfor %}
+  </table>
+</details>
+
+<details>
+  <summary>Hill (derived)</summary>
+  <table>
+    <tr><th>Date</th><th>Wk</th><th>Planned</th><th>Met?</th></tr>
+    {% for r in view.hill %}
+    <tr><td>{{ r.date }}</td><td>{{ r.week }}</td><td>{{ r.planned_repeats if r.planned_repeats is not none else "" }}</td>
+      <td class="met-{{ r.planned_met }}">{{ r.planned_met }}</td></tr>
+    {% endfor %}
+  </table>
+</details>
+
+<details>
+  <summary>Recovery (derived)</summary>
+  <table>
+    <tr><th>Week</th><th>Score</th><th>Status</th></tr>
+    {% for r in view.recovery %}
+    <tr><td>{{ r.week }}</td><td>{{ r.score|round(2) if r.score is not none else "" }}</td><td>{{ r.status }}</td></tr>
+    {% endfor %}
+  </table>
+</details>
+
+<script id="data" type="application/json">{{ view_json|safe }}</script>
+<script>
+const VIEW = JSON.parse(document.getElementById("data").textContent);
+
+function lineChart(id, datasets) {
+  new Chart(document.getElementById(id), {
+    type: "line",
+    data: { datasets },
+    options: { parsing: false, scales: { x: { type: "category" } } },
+  });
+}
+
+// e1RM over time — one dataset per lift
+const e1 = VIEW.e1rm_series;
+lineChart("e1rmChart", Object.keys(e1).map(lift => ({
+  label: lift,
+  data: e1[lift].map(p => ({ x: p.date, y: p.value })),
+})));
+
+// Zone 2 weekly volume — planned vs actual bars
+const zv = VIEW.zone2_volume;
+const weeks = Object.keys(zv);
+new Chart(document.getElementById("zone2Chart"), {
+  type: "bar",
+  data: {
+    labels: weeks.map(w => "Wk " + w),
+    datasets: [
+      { label: "Zone2 actual", data: weeks.map(w => zv[w].actual) },
+      { label: "Zone2 planned", data: weeks.map(w => zv[w].planned) },
+    ],
+  },
+});
+
+// Recovery score per week
+const rec = VIEW.recovery.filter(r => r.score !== null);
+new Chart(document.getElementById("recoveryChart"), {
+  type: "line",
+  data: {
+    labels: rec.map(r => "Wk " + r.week),
+    datasets: [{ label: "Recovery score", data: rec.map(r => r.score) }],
+  },
+});
+</script>
+</body>
+</html>
