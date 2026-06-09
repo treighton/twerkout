@@ -13,5 +13,8 @@ def render_dashboard(view: dict) -> str:
         autoescape=select_autoescape(["html"]),
     )
     template = env.get_template("dashboard.html.j2")
-    # Embed computed data as JSON for Chart.js; tojson handles escaping safely.
-    return template.render(view=view, view_json=json.dumps(view))
+    # Embed computed data as a JSON island for the charts. json.dumps produces
+    # valid JSON; escape "</" so a stray "</script>" in a notes field can't
+    # terminate the <script> element early.
+    view_json = json.dumps(view).replace("</", "<\\/")
+    return template.render(view=view, view_json=view_json)

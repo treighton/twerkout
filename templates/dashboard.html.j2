@@ -13,7 +13,7 @@
   crossorigin="anonymous"></script>
 <style>
   :root { font-family: system-ui, sans-serif; }
-  body { margin: 0; padding: 1rem; max-width: 900px; margin: 0 auto; color: #1a1a1a; }
+  body { padding: 1rem; max-width: 900px; margin: 0 auto; color: #1a1a1a; }
   h1 { font-size: 1.4rem; }
   .summary { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1rem 0; }
   .card { background: #f4f4f5; border-radius: 8px; padding: 0.75rem 1rem; flex: 1 1 140px; }
@@ -107,7 +107,10 @@ function lineChart(id, datasets) {
   new Chart(document.getElementById(id), {
     type: "line",
     data: { datasets },
-    options: { parsing: false, scales: { x: { type: "category" } } },
+    options: {
+      parsing: { xAxisKey: "date", yAxisKey: "value" },
+      scales: { x: { type: "category" } },
+    },
   });
 }
 
@@ -115,7 +118,7 @@ function lineChart(id, datasets) {
 const e1 = VIEW.e1rm_series;
 lineChart("e1rmChart", Object.keys(e1).map(lift => ({
   label: lift,
-  data: e1[lift].map(p => ({ x: p.date, y: p.value })),
+  data: e1[lift],
 })));
 
 // Zone 2 weekly volume — planned vs actual bars
