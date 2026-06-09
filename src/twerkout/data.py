@@ -4,6 +4,7 @@ Blank cells -> None for numeric fields, "" for text fields. Malformed numbers
 raise ValueError with the file + field so CI fails loudly at push time.
 """
 import csv
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Optional
 
@@ -22,21 +23,35 @@ def _num(value: str, *, field: str, source: Path) -> Optional[float]:
         raise ValueError(f"{source.name}: bad number in '{field}': {value!r}") from exc
 
 
-def _rows(path: Path):
+def _int_required(value: str, *, field: str, source: Path) -> int:
+    v = (value or "").strip()
+    if not v:
+        raise ValueError(f"{source.name}: required integer field '{field}' is blank")
+    try:
+        return int(v)
+    except ValueError as exc:
+        raise ValueError(f"{source.name}: bad integer in '{field}': {v!r}") from exc
+
+
+def _rows(path: Path) -> Iterator[dict[str, str]]:
     with open(path, newline="") as f:
         yield from csv.DictReader(f)
 
 
 def load_config(path: Path) -> Config:
     values = {r["key"].strip(): r["value"].strip() for r in _rows(path)}
-    return Config(program_start=values["program_start"])
+    try:
+        start = values["program_start"]
+    except KeyError:
+        raise ValueError(f"{path.name}: missing required key 'program_start'")
+    return Config(program_start=start)
 
 
 def load_program(path: Path) -> list[ProgramWeek]:
     out = []
     for r in _rows(path):
         out.append(ProgramWeek(
-            week=int(r["week"]),
+            week=_int_required(r["week"], field="week", source=path),
             zone2_planned_min=_num(r["zone2_planned_min"], field="zone2_planned_min", source=path),
             ruck_planned_min=_num(r["ruck_planned_min"], field="ruck_planned_min", source=path),
             ruck_planned_weight=_num(r["ruck_planned_weight"], field="ruck_planned_weight", source=path),
@@ -112,7 +127,7 @@ def load_recovery(path: Path) -> list[RecoveryRow]:
     out = []
     for r in _rows(path):
         out.append(RecoveryRow(
-            week=int(r["week"]),
+            week=_int_required(r["week"], field="week", source=path),
             bodyweight=_num(r["bodyweight"], field="bodyweight", source=path),
             avg_sleep=_num(r["avg_sleep"], field="avg_sleep", source=path),
             energy=_num(r["energy"], field="energy", source=path),

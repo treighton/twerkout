@@ -1,3 +1,4 @@
+import pytest
 from pathlib import Path
 
 from twerkout.models import ProgramWeek, StrengthRow
@@ -43,3 +44,13 @@ def test_load_strength_blanks_become_none():
     assert rows[1].bodyweight is None   # blank cell
     assert rows[1].press is None        # blank cell
     assert rows[1].squat == 225.0
+
+
+def test_load_strength_bad_number_raises_with_context(tmp_path):
+    csv_path = tmp_path / "strength.csv"
+    csv_path.write_text(
+        "date,workout,bodyweight,squat,press,bench,deadlift,reps,notes\n"
+        "2026-06-02,A,not_a_number,225,95,185,275,5,\n"
+    )
+    with pytest.raises(ValueError, match="bodyweight"):
+        load_strength(csv_path)
