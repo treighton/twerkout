@@ -40,6 +40,8 @@
 
 <canvas id="e1rmChart" height="120"></canvas>
 <canvas id="zone2Chart" height="120"></canvas>
+<canvas id="ruckChart" height="120"></canvas>
+<canvas id="hillChart" height="120"></canvas>
 <canvas id="recoveryChart" height="120"></canvas>
 
 <details>
@@ -121,19 +123,23 @@ lineChart("e1rmChart", Object.keys(e1).map(lift => ({
   data: e1[lift],
 })));
 
-// Zone 2 weekly volume — planned vs actual bars
-const zv = VIEW.zone2_volume;
-const weeks = Object.keys(zv);
-new Chart(document.getElementById("zone2Chart"), {
-  type: "bar",
-  data: {
-    labels: weeks.map(w => "Wk " + w),
-    datasets: [
-      { label: "Zone2 actual", data: weeks.map(w => zv[w].actual) },
-      { label: "Zone2 planned", data: weeks.map(w => zv[w].planned) },
-    ],
-  },
-});
+// Weekly volume — planned vs actual bars, one chart per discipline
+function volumeChart(id, vol, actualLabel, plannedLabel) {
+  const weeks = Object.keys(vol);
+  new Chart(document.getElementById(id), {
+    type: "bar",
+    data: {
+      labels: weeks.map(w => "Wk " + w),
+      datasets: [
+        { label: actualLabel, data: weeks.map(w => vol[w].actual) },
+        { label: plannedLabel, data: weeks.map(w => vol[w].planned) },
+      ],
+    },
+  });
+}
+volumeChart("zone2Chart", VIEW.zone2_volume, "Zone2 actual min", "Zone2 planned min");
+volumeChart("ruckChart", VIEW.ruck_volume, "Ruck actual min", "Ruck planned min");
+volumeChart("hillChart", VIEW.hill_volume, "Hill actual repeats", "Hill planned repeats");
 
 // Recovery score per week
 const rec = VIEW.recovery.filter(r => r.score !== null);
