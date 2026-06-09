@@ -139,15 +139,20 @@ def _e1rm_series(strength: list[dict]) -> dict[str, list]:
 
 
 def _summary(strength: list[dict], zone2: list[dict], recovery: list[dict]) -> dict:
+    # "latest" is by date/week, not input position, so out-of-order hand-edited
+    # CSV rows still produce the correct most-recent values.
+    strength_by_date = sorted(strength, key=lambda r: r["date"])
     current_week = max(
         [r["week"] for r in strength] + [r["week"] for r in zone2] + [1]
     )
     total_zone2 = sum(r["duration_min"] for r in zone2 if r["duration_min"] is not None)
     latest_e1rm = {}
     for lift in ("squat", "press", "bench", "deadlift"):
-        vals = [r[f"e1rm_{lift}"] for r in strength if r.get(f"e1rm_{lift}") is not None]
+        vals = [r[f"e1rm_{lift}"] for r in strength_by_date if r.get(f"e1rm_{lift}") is not None]
         latest_e1rm[lift] = round(vals[-1], 1) if vals else None
-    latest_status = recovery[-1]["status"] if recovery else ""
+    latest_status = ""
+    if recovery:
+        latest_status = max(recovery, key=lambda r: r["week"])["status"]
     return {
         "current_week": current_week,
         "total_zone2_min": total_zone2,
