@@ -3,7 +3,7 @@
 Output is plain dicts (JSON-friendly) so render.py can embed them directly.
 """
 from twerkout.models import (
-    ProgramWeek, StrengthRow, Zone2Row, RuckRow, HillRow, RecoveryRow,
+    Config, ProgramWeek, StrengthRow, Zone2Row, RuckRow, HillRow, RecoveryRow,
 )
 from twerkout import metrics
 
@@ -124,3 +124,55 @@ def weekly_ruck_volume(enriched: list[dict], program: list[ProgramWeek]) -> dict
 
 def weekly_hill_volume(enriched: list[dict], program: list[ProgramWeek]) -> dict[int, dict]:
     return _weekly_actual_vs_planned(enriched, "repeats", program, "hill_planned_repeats")
+
+
+def _e1rm_series(strength: list[dict]) -> dict[str, list]:
+    """Per-lift [ {date, value}, ... ] for the e1RM-over-time line chart."""
+    lifts = ("squat", "press", "bench", "deadlift")
+    series = {lift: [] for lift in lifts}
+    for row in strength:
+        for lift in lifts:
+            v = row.get(f"e1rm_{lift}")
+            if v is not None:
+                series[lift].append({"date": row["date"], "value": round(v, 1)})
+    return series
+
+
+def _summary(strength: list[dict], zone2: list[dict], recovery: list[dict]) -> dict:
+    current_week = max(
+        [r["week"] for r in strength] + [r["week"] for r in zone2] + [1]
+    )
+    total_zone2 = sum(r["duration_min"] for r in zone2 if r["duration_min"] is not None)
+    latest_e1rm = {}
+    for lift in ("squat", "press", "bench", "deadlift"):
+        vals = [r[f"e1rm_{lift}"] for r in strength if r.get(f"e1rm_{lift}") is not None]
+        latest_e1rm[lift] = round(vals[-1], 1) if vals else None
+    latest_status = recovery[-1]["status"] if recovery else ""
+    return {
+        "current_week": current_week,
+        "total_zone2_min": total_zone2,
+        "latest_e1rm": latest_e1rm,
+        "latest_recovery_status": latest_status,
+    }
+
+
+def build_view(
+    config: Config, program: list[ProgramWeek],
+    strength: list[StrengthRow], zone2: list[Zone2Row],
+    ruck: list[RuckRow], hill: list[HillRow], recovery: list[RecoveryRow],
+) -> dict:
+    start = config.program_start
+    s = enrich_strength(strength, start)
+    z = enrich_zone2(zone2, program, start)
+    rk = enrich_ruck(ruck, program, start)
+    h = enrich_hill(hill, program, start)
+    rec = enrich_recovery(recovery)
+    return {
+        "program": [vars(p) for p in program],
+        "strength": s, "zone2": z, "ruck": rk, "hill": h, "recovery": rec,
+        "summary": _summary(s, z, rec),
+        "e1rm_series": _e1rm_series(s),
+        "zone2_volume": weekly_zone2_volume(z, program),
+        "ruck_volume": weekly_ruck_volume(rk, program),
+        "hill_volume": weekly_hill_volume(h, program),
+    }

@@ -1,6 +1,7 @@
-from twerkout.models import ProgramWeek, StrengthRow, Zone2Row, RecoveryRow
+from twerkout.models import ProgramWeek, StrengthRow, Zone2Row, RecoveryRow, Config
 from twerkout.rollups import (
     enrich_strength, enrich_zone2, weekly_zone2_volume, enrich_recovery, enrich_ruck,
+    build_view,
 )
 
 PROGRAM = [
@@ -70,3 +71,21 @@ def test_enrich_ruck_picks_up_both_planned_fields():
     rows2 = [RuckRow(date="2026-06-02", pack_weight=15, duration_min=45)]
     out2 = enrich_ruck(rows2, PROGRAM, START)
     assert out2[0]["planned_met"] == "No"
+
+
+def test_build_view_assembles_all_sections():
+    cfg = Config(program_start="2026-06-01")
+    view = build_view(
+        config=cfg, program=PROGRAM,
+        strength=[StrengthRow(date="2026-06-02", workout="A", squat=225, reps=5)],
+        zone2=[Zone2Row(date="2026-06-02", activity="Rower", duration_min=35)],
+        ruck=[], hill=[],
+        recovery=[RecoveryRow(week=1, avg_sleep=8, energy=10, fatigue=2, soreness=2)],
+    )
+    assert "summary" in view
+    assert view["summary"]["current_week"] >= 1
+    assert len(view["strength"]) == 1
+    assert view["zone2"][0]["planned_met"] == "Yes"
+    assert "e1rm_series" in view  # chart data
+    assert "zone2_volume" in view
+    assert view["summary"]["latest_recovery_status"] in {"On Track", "Caution", "Back Off", ""}
