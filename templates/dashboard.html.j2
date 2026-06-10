@@ -47,13 +47,11 @@
 <details>
   <summary>Strength (derived)</summary>
   <table>
-    <tr><th>Date</th><th>Wk</th><th>e1RM Sq</th><th>e1RM Pr</th><th>e1RM Be</th><th>e1RM Dl</th></tr>
+    <tr><th>Date</th><th>Wk</th><th>Workout</th><th>Lift</th><th>Weight × Sets × Reps</th><th>e1RM</th></tr>
     {% for r in view.strength %}
-    <tr><td>{{ r.date }}</td><td>{{ r.week }}</td>
-      <td>{{ r.e1rm_squat|round(1) if r.e1rm_squat is not none else "" }}</td>
-      <td>{{ r.e1rm_press|round(1) if r.e1rm_press is not none else "" }}</td>
-      <td>{{ r.e1rm_bench|round(1) if r.e1rm_bench is not none else "" }}</td>
-      <td>{{ r.e1rm_deadlift|round(1) if r.e1rm_deadlift is not none else "" }}</td></tr>
+    <tr><td>{{ r.date }}</td><td>{{ r.week }}</td><td>{{ r.workout }}</td><td>{{ r.lift }}</td>
+      <td>{% if r.weight is not none %}{{ r.weight }} × {{ r.sets if r.sets is not none else "?" }} × {{ r.reps if r.reps is not none else "?" }}{% endif %}</td>
+      <td>{{ r.e1rm|round(1) if r.e1rm is not none else "" }}</td></tr>
     {% endfor %}
   </table>
 </details>
