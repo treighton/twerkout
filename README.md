@@ -18,17 +18,18 @@ weekly rollups) is computed by `build.py` at build time.
 Add a row to the relevant file in `data/`. Each section below shows the header
 and one example row you can copy, adapt, and paste under it.
 
-A typical training week (with `program_start = 2026-06-01`, a Monday):
+A typical training week (the examples below use week 1 of the current
+`program_start = 2026-06-09`):
 
-| Day | Session | File |
-|-----|---------|------|
-| Mon | Zone 2 spin bike | `zone2.csv` |
-| Tue | Starting Strength | `strength.csv` |
-| Wed | Ruck | `ruck.csv` |
-| Thu | Starting Strength | `strength.csv` |
-| Fri | Hill repeats | `hill.csv` |
-| Sat | Starting Strength | `strength.csv` |
-| Sun | Rest | — |
+| Day | Date | Session | File |
+|-----|------|---------|------|
+| Tue | 2026-06-09 | Starting Strength | `strength.csv` |
+| Wed | 2026-06-10 | Ruck | `ruck.csv` |
+| Thu | 2026-06-11 | Starting Strength | `strength.csv` |
+| Fri | 2026-06-12 | Hill repeats | `hill.csv` |
+| Sat | 2026-06-13 | Starting Strength | `strength.csv` |
+| Mon | 2026-06-15 | Zone 2 spin bike | `zone2.csv` |
+| Sun | — | Rest | — |
 
 Record recovery once per week (`recovery.csv`). Leave any cell blank if you
 didn't measure it — blanks become "no value" and are skipped in calculations
@@ -44,8 +45,8 @@ columns are blank on any given day.
 
 ```csv
 date,workout,bodyweight,squat,press,bench,deadlift,reps,notes
-2026-06-02,A,180,225,115,,275,5,felt easy
-2026-06-04,B,180,230,,135,,5,bench was a grind
+2026-06-09,A,180,225,115,,275,5,felt easy
+2026-06-11,B,180,230,,135,,5,bench was a grind
 ```
 
 ### Zone 2 (`zone2.csv`)
@@ -55,7 +56,7 @@ aerobic base work. Week 1 plans 30 min; logging 30+ marks it "met".
 
 ```csv
 date,activity,duration_min,avg_hr,distance,resistance,rpe,notes
-2026-06-01,Spin Bike,30,135,,8,4,kept HR in zone 2
+2026-06-15,Spin Bike,30,135,,8,4,kept HR in zone 2
 ```
 
 ### Ruck (`ruck.csv`)
@@ -66,7 +67,7 @@ duration reach the plan, and computes ruck load = pack weight × duration.
 
 ```csv
 date,pack_weight,duration_min,distance,elevation,terrain,notes
-2026-06-03,20,30,2,150,Trail,run uphill / walk down
+2026-06-10,20,30,2,150,Trail,run uphill / walk down
 ```
 
 ### Hill repeats (`hill.csv`)
@@ -77,7 +78,7 @@ in the tank.
 
 ```csv
 date,repeats,hill_len_sec,rpe,walk_down,notes
-2026-06-05,4,45,8,Yes,walked down between each
+2026-06-12,4,45,8,Yes,walked down between each
 ```
 
 ### Recovery (`recovery.csv`)
