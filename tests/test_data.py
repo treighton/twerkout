@@ -47,22 +47,46 @@ def test_load_program_parses_numbers_and_blank_notes():
     assert weeks[1].notes == ""
 
 
-def test_load_strength_blanks_become_none():
+def test_load_strength_per_lift_rows():
     rows = load_strength(FIX / "strength.csv")
-    assert rows[0].squat == 225.0
+    assert len(rows) == 2
+    assert rows[0].lift == "squat"
+    assert rows[0].weight == 225.0
+    assert rows[0].sets == 3.0
+    assert rows[0].reps == 5.0
     assert rows[0].bodyweight == 180.0
-    assert rows[1].bodyweight is None   # blank cell
-    assert rows[1].press is None        # blank cell
-    assert rows[1].squat == 225.0
+    # second row: blank bodyweight -> None
+    assert rows[1].lift == "press"
+    assert rows[1].bodyweight is None
 
 
-def test_load_strength_bad_number_raises_with_context(tmp_path):
+def test_load_strength_lowercases_lift(tmp_path):
     csv_path = tmp_path / "strength.csv"
     csv_path.write_text(
-        "date,workout,bodyweight,squat,press,bench,deadlift,reps,notes\n"
-        "2026-06-02,A,not_a_number,225,95,185,275,5,\n"
+        "date,workout,lift,weight,sets,reps,bodyweight,notes\n"
+        "2026-06-09,A,SQUAT,225,3,5,180,\n"
     )
-    with pytest.raises(ValueError, match="bodyweight"):
+    rows = load_strength(csv_path)
+    assert rows[0].lift == "squat"   # lowercased
+
+
+def test_load_strength_blank_lift_raises(tmp_path):
+    csv_path = tmp_path / "strength.csv"
+    csv_path.write_text(
+        "date,workout,lift,weight,sets,reps,bodyweight,notes\n"
+        "2026-06-09,A,,225,3,5,180,\n"
+    )
+    with pytest.raises(ValueError, match="blank lift"):
+        load_strength(csv_path)
+
+
+def test_load_strength_bad_weight_raises(tmp_path):
+    csv_path = tmp_path / "strength.csv"
+    csv_path.write_text(
+        "date,workout,lift,weight,sets,reps,bodyweight,notes\n"
+        "2026-06-09,A,squat,not_a_number,3,5,180,\n"
+    )
+    with pytest.raises(ValueError, match="weight"):
         load_strength(csv_path)
 
 

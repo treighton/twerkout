@@ -69,15 +69,17 @@ def load_program(path: Path) -> list[ProgramWeek]:
 def load_strength(path: Path) -> list[StrengthRow]:
     out = []
     for r in _rows(path):
+        lift = (r.get("lift") or "").strip().lower()
+        if not lift:
+            raise ValueError(f"{path.name}: blank lift on row dated {r.get('date', '?')!r}")
         out.append(StrengthRow(
             date=r["date"].strip(),
+            lift=lift,
             workout=(r.get("workout") or "").strip(),
-            bodyweight=_num(r["bodyweight"], field="bodyweight", source=path),
-            squat=_num(r["squat"], field="squat", source=path),
-            press=_num(r["press"], field="press", source=path),
-            bench=_num(r["bench"], field="bench", source=path),
-            deadlift=_num(r["deadlift"], field="deadlift", source=path),
+            weight=_num(r["weight"], field="weight", source=path),
+            sets=_num(r["sets"], field="sets", source=path),
             reps=_num(r["reps"], field="reps", source=path),
+            bodyweight=_num(r["bodyweight"], field="bodyweight", source=path),
             notes=(r.get("notes") or "").strip(),
         ))
     return out
