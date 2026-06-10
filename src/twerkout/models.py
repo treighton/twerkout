@@ -25,13 +25,12 @@ class ProgramWeek:
 @dataclass
 class StrengthRow:
     date: str
+    lift: str = ""
     workout: str = ""
-    bodyweight: Optional[float] = None
-    squat: Optional[float] = None
-    press: Optional[float] = None
-    bench: Optional[float] = None
-    deadlift: Optional[float] = None
+    weight: Optional[float] = None
+    sets: Optional[float] = None
     reps: Optional[float] = None
+    bodyweight: Optional[float] = None
     notes: str = ""
 
 

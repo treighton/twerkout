@@ -17,11 +17,21 @@ def test_program_week_fields():
     assert pw.zone2_planned_min == 30
 
 
-def test_strength_row_optional_fields_default_none():
-    row = StrengthRow(date="2026-06-02")
-    assert row.date == "2026-06-02"
-    assert row.squat is None
-    assert row.reps is None
+def test_strength_row_new_per_lift_shape():
+    row = StrengthRow(date="2026-06-09", workout="A", lift="squat",
+                      weight=225, sets=3, reps=5, bodyweight=180, notes="ok")
+    assert row.lift == "squat"
+    assert row.weight == 225
+    assert row.sets == 3
+    assert row.reps == 5
+
+
+def test_strength_row_defaults():
+    row = StrengthRow(date="2026-06-09", lift="press")
+    assert row.weight is None
+    assert row.sets is None
+    assert row.bodyweight is None
+    assert row.workout == ""
 
 
 def test_load_config_reads_program_start():
