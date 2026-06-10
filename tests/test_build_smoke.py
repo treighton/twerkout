@@ -22,4 +22,6 @@ def test_build_produces_dashboard_with_expected_data(tmp_path):
     assert view["ruck"][0]["load"] == 30 * 45
     assert view["recovery"][0]["status"] == "On Track"  # fixture score 5.5
     assert view["hill"][0]["planned_met"] == "Yes"      # 5 repeats >= 4 planned (week 1)
-    assert view["strength"][0]["e1rm_squat"] == pytest.approx(225 * (1 + 5 / 30), rel=1e-3)
+    # strength is now per-lift: first fixture row is squat 225×3×5
+    assert view["strength"][0]["lift"] == "squat"
+    assert view["strength"][0]["e1rm"] == pytest.approx(225 * (1 + 5 / 30), rel=1e-3)

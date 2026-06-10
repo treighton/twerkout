@@ -32,21 +32,22 @@ A typical training week (the examples below use week 1 of the current
 | Sun | — | Rest | — |
 
 Record recovery once per week (`recovery.csv`). Leave any cell blank if you
-didn't measure it — blanks become "no value" and are skipped in calculations
-(notice the empty `bench` cell in the strength example below).
+didn't measure it — blanks become "no value" and are skipped in calculations.
 
 ### Strength (`strength.csv`)
 
-`date, workout, bodyweight, squat, press, bench, deadlift, reps, notes` — enter
-the weight for each lift you did and the **actual reps** performed; e1RM is
-computed per lift via the Epley formula. Starting Strength alternates workout A
-(squat / press / deadlift) and B (squat / bench / deadlift), so some lift
-columns are blank on any given day.
+`date, workout, lift, weight, sets, reps, bodyweight, notes` — **one row per
+lift**. Enter the work-set weight, the number of `sets`, and the `reps` per set;
+e1RM is computed per lift via the Epley formula using your actual reps. Standard
+Starting Strength is 3×5 (`sets=3, reps=5`), except the deadlift, which is 1×5
+(`sets=1`). Record `bodyweight` once per day on the first row; leave it blank on
+the rest. A full Workout A day (squat / press / deadlift) is three rows:
 
 ```csv
-date,workout,bodyweight,squat,press,bench,deadlift,reps,notes
-2026-06-09,A,180,225,115,,275,5,felt easy
-2026-06-11,B,180,230,,135,,5,bench was a grind
+date,workout,lift,weight,sets,reps,bodyweight,notes
+2026-06-09,A,squat,225,3,5,180,felt easy
+2026-06-09,A,press,115,3,5,,
+2026-06-09,A,deadlift,275,1,5,,across the back
 ```
 
 ### Zone 2 (`zone2.csv`)
