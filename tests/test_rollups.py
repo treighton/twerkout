@@ -11,13 +11,23 @@ PROGRAM = [
 START = "2026-06-01"
 
 
-def test_enrich_strength_adds_week_and_e1rm():
-    rows = [StrengthRow(date="2026-06-02", workout="A", squat=225, reps=5)]
+def test_enrich_strength_per_lift_adds_week_and_e1rm():
+    rows = [
+        StrengthRow(date="2026-06-02", workout="A", lift="squat", weight=225, sets=3, reps=5, bodyweight=180),
+        StrengthRow(date="2026-06-02", workout="A", lift="deadlift", weight=275, sets=1, reps=5),
+    ]
     out = enrich_strength(rows, START)
     assert out[0]["week"] == 1
-    assert round(out[0]["e1rm_squat"], 1) == round(225 * (1 + 5 / 30), 1)
-    # blank lifts have None e1rm
-    assert out[0]["e1rm_press"] is None
+    assert out[0]["lift"] == "squat"
+    assert out[0]["sets"] == 3
+    assert round(out[0]["e1rm"], 1) == round(225 * (1 + 5 / 30), 1)
+    assert round(out[1]["e1rm"], 1) == round(275 * (1 + 5 / 30), 1)
+
+
+def test_enrich_strength_blank_weight_gives_none_e1rm():
+    rows = [StrengthRow(date="2026-06-02", lift="press", sets=3, reps=5)]
+    out = enrich_strength(rows, START)
+    assert out[0]["e1rm"] is None
 
 
 def test_enrich_zone2_adds_planned_met():
@@ -77,7 +87,7 @@ def test_build_view_assembles_all_sections():
     cfg = Config(program_start="2026-06-01")
     view = build_view(
         config=cfg, program=PROGRAM,
-        strength=[StrengthRow(date="2026-06-02", workout="A", squat=225, reps=5)],
+        strength=[StrengthRow(date="2026-06-02", workout="A", lift="squat", weight=225, sets=3, reps=5)],
         zone2=[Zone2Row(date="2026-06-02", activity="Rower", duration_min=35)],
         ruck=[], hill=[],
         recovery=[RecoveryRow(week=1, avg_sleep=8, energy=10, fatigue=2, soreness=2)],
@@ -85,6 +95,7 @@ def test_build_view_assembles_all_sections():
     assert "summary" in view
     assert view["summary"]["current_week"] >= 1
     assert len(view["strength"]) == 1
+    assert view["summary"]["latest_e1rm"]["squat"] is not None
     assert view["zone2"][0]["planned_met"] == "Yes"
     assert "e1rm_series" in view  # chart data
     assert "zone2_volume" in view
@@ -97,8 +108,8 @@ def test_summary_latest_e1rm_is_by_date_not_position():
     view = build_view(
         config=cfg, program=PROGRAM,
         strength=[
-            StrengthRow(date="2026-06-09", workout="A", squat=250, reps=5),  # later
-            StrengthRow(date="2026-06-02", workout="A", squat=225, reps=5),  # earlier
+            StrengthRow(date="2026-06-09", workout="A", lift="squat", weight=250, sets=3, reps=5),  # later
+            StrengthRow(date="2026-06-02", workout="A", lift="squat", weight=225, sets=3, reps=5),  # earlier
         ],
         zone2=[], ruck=[], hill=[],
         recovery=[

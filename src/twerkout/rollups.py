@@ -18,12 +18,9 @@ def enrich_strength(rows: list[StrengthRow], program_start: str) -> list[dict]:
         week = metrics.week_for_date(r.date, program_start)
         out.append({
             "date": r.date, "week": week, "workout": r.workout,
-            "bodyweight": r.bodyweight, "reps": r.reps, "notes": r.notes,
-            "squat": r.squat, "press": r.press, "bench": r.bench, "deadlift": r.deadlift,
-            "e1rm_squat": metrics.e1rm(r.squat, r.reps),
-            "e1rm_press": metrics.e1rm(r.press, r.reps),
-            "e1rm_bench": metrics.e1rm(r.bench, r.reps),
-            "e1rm_deadlift": metrics.e1rm(r.deadlift, r.reps),
+            "lift": r.lift, "weight": r.weight, "sets": r.sets, "reps": r.reps,
+            "bodyweight": r.bodyweight, "notes": r.notes,
+            "e1rm": metrics.e1rm(r.weight, r.reps),
         })
     return out
 
@@ -127,14 +124,18 @@ def weekly_hill_volume(enriched: list[dict], program: list[ProgramWeek]) -> dict
 
 
 def _e1rm_series(strength: list[dict]) -> dict[str, list]:
-    """Per-lift [ {date, value}, ... ] for the e1RM-over-time line chart."""
-    lifts = ("squat", "press", "bench", "deadlift")
-    series = {lift: [] for lift in lifts}
-    for row in strength:
-        for lift in lifts:
-            v = row.get(f"e1rm_{lift}")
-            if v is not None:
-                series[lift].append({"date": row["date"], "value": round(v, 1)})
+    """Per-lift [ {date, value}, ... ] for the e1RM-over-time line chart.
+
+    Lifts are discovered from the data (the `lift` field) rather than a fixed
+    column set, and points are emitted in date order.
+    """
+    series: dict[str, list] = {}
+    for row in sorted(strength, key=lambda r: r["date"]):
+        if row.get("e1rm") is None:
+            continue
+        series.setdefault(row["lift"], []).append(
+            {"date": row["date"], "value": round(row["e1rm"], 1)}
+        )
     return series
 
 
@@ -146,10 +147,10 @@ def _summary(strength: list[dict], zone2: list[dict], recovery: list[dict]) -> d
         [r["week"] for r in strength] + [r["week"] for r in zone2] + [1]
     )
     total_zone2 = sum(r["duration_min"] for r in zone2 if r["duration_min"] is not None)
-    latest_e1rm = {}
-    for lift in ("squat", "press", "bench", "deadlift"):
-        vals = [r[f"e1rm_{lift}"] for r in strength_by_date if r.get(f"e1rm_{lift}") is not None]
-        latest_e1rm[lift] = round(vals[-1], 1) if vals else None
+    latest_e1rm: dict[str, float] = {}
+    for r in strength_by_date:  # already sorted by date ascending; last per lift wins
+        if r.get("e1rm") is not None:
+            latest_e1rm[r["lift"]] = round(r["e1rm"], 1)
     latest_status = ""
     if recovery:
         latest_status = max(recovery, key=lambda r: r["week"])["status"]
