@@ -49,7 +49,7 @@ def test_load_program_parses_numbers_and_blank_notes():
 
 def test_load_strength_per_lift_rows():
     rows = load_strength(FIX / "strength.csv")
-    assert len(rows) == 2
+    assert len(rows) == 3
     assert rows[0].lift == "squat"
     assert rows[0].weight == 225.0
     assert rows[0].sets == 3.0
@@ -58,6 +58,9 @@ def test_load_strength_per_lift_rows():
     # second row: blank bodyweight -> None
     assert rows[1].lift == "press"
     assert rows[1].bodyweight is None
+    # deadlift is 1×5, not 3×5
+    assert rows[2].lift == "deadlift"
+    assert rows[2].sets == 1.0
 
 
 def test_load_strength_lowercases_lift(tmp_path):

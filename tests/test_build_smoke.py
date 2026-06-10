@@ -25,3 +25,7 @@ def test_build_produces_dashboard_with_expected_data(tmp_path):
     # strength is now per-lift: first fixture row is squat 225×3×5
     assert view["strength"][0]["lift"] == "squat"
     assert view["strength"][0]["e1rm"] == pytest.approx(225 * (1 + 5 / 30), rel=1e-3)
+    # deadlift is recorded as 1×5 and still computes e1RM
+    deadlift = next(r for r in view["strength"] if r["lift"] == "deadlift")
+    assert deadlift["sets"] == 1
+    assert deadlift["e1rm"] == pytest.approx(275 * (1 + 5 / 30), rel=1e-3)

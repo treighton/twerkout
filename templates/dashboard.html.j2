@@ -50,7 +50,7 @@
     <tr><th>Date</th><th>Wk</th><th>Workout</th><th>Lift</th><th>Weight × Sets × Reps</th><th>e1RM</th></tr>
     {% for r in view.strength %}
     <tr><td>{{ r.date }}</td><td>{{ r.week }}</td><td>{{ r.workout }}</td><td>{{ r.lift }}</td>
-      <td>{% if r.weight is not none %}{{ r.weight }} × {{ r.sets if r.sets is not none else "?" }} × {{ r.reps if r.reps is not none else "?" }}{% endif %}</td>
+      <td>{% if r.weight is not none %}{{ "%g"|format(r.weight) }} × {{ "%g"|format(r.sets) if r.sets is not none else "?" }} × {{ "%g"|format(r.reps) if r.reps is not none else "?" }}{% endif %}</td>
       <td>{{ r.e1rm|round(1) if r.e1rm is not none else "" }}</td></tr>
     {% endfor %}
   </table>
